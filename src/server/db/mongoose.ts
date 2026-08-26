@@ -1,7 +1,9 @@
 import mongoose from "mongoose";
-
+import dns from 'node:dns'
 import { env } from "../config/env";
 import { logger } from "../logger/logger";
+
+dns.setServers(['8.8.8.8','8.8.4.4'])
 
 const MONGOOSE_READY_STATE = {
   DISCONNECTED: 0,
@@ -10,47 +12,7 @@ const MONGOOSE_READY_STATE = {
   DISCONNECTING: 3,
 } as const;
 
-export async function connectToDatabase(): Promise<typeof mongoose> {
-  if (mongoose.connection.readyState === MONGOOSE_READY_STATE.CONNECTED) {
-    return mongoose;
-  }
-
-  if (mongoose.connection.readyState === MONGOOSE_READY_STATE.CONNECTING) {
-    await mongoose.connection.asPromise();
-
-    return mongoose;
-  }
-
-  try {
-    await mongoose.connect(env.MONGODB_URI, {
-      autoIndex: env.NODE_ENV !== "production",
-      maxPoolSize: 10,
-      minPoolSize: 2,
-      serverSelectionTimeoutMS: 5000,
-    });
-
-    logger.info("MONGODB CONNECTED", {
-      database: mongoose.connection.name,
-    });
-    return mongoose;
-  } catch (error) {
-    logger.error("MongoDb Connection Failed", {
-      error: error instanceof Error ? error.message : error,
-    });
-
-    throw error;
-  }
-}
-
-export async function disconnectFromDatabase(): Promise<void> {
-  if (mongoose.connection.readyState === MONGOOSE_READY_STATE.DISCONNECTED) {
-    return;
-  }
-
-  await mongoose.disconnect();
-
-  logger.info("MongoDB disconnected");
-}
+let connectionPromise : Promise<typeof mongoose> | null = null
 
 mongoose.connection.on("connected", () => {
   logger.info("MongoDB connection established");
@@ -65,3 +27,53 @@ mongoose.connection.on("error", (error) => {
     error: error.message,
   });
 });
+
+
+export async function connectToDatabase(): Promise<typeof mongoose> {
+  if (mongoose.connection.readyState === MONGOOSE_READY_STATE.CONNECTED) {
+    return mongoose;
+  }
+
+  if (mongoose.connection.readyState === MONGOOSE_READY_STATE.CONNECTING) {
+    if(connectionPromise){
+      return connectionPromise
+    }
+
+    await mongoose.connection.asPromise()
+    return mongoose
+  }
+
+  connectionPromise = mongoose.connect(env.MONGODB_URI , {
+    autoIndex : env.NODE_ENV !== 'production',
+    maxPoolSize : 10,
+    minPoolSize : 2,
+    serverSelectionTimeoutMS : 5000
+  })
+  .then(()=>{
+    logger.info('MONGODB CONNECTED SUCCESSFULLY')
+    return mongoose
+  }).catch((error) => {
+    logger.error("MONGODB CONNECTION FAILED",{
+      error : error instanceof Error ? error.message : error
+    })
+    throw error
+  }).finally(()=>{
+    connectionPromise = null
+  })
+
+  return connectionPromise
+
+
+}
+
+
+export async function disconnectFromDatabase(): Promise<void> {
+  if (mongoose.connection.readyState === MONGOOSE_READY_STATE.DISCONNECTED) {
+    return;
+  }
+
+  await mongoose.disconnect();
+
+  logger.info("MongoDB disconnected");
+}
+

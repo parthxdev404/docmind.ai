@@ -1,36 +1,26 @@
 import "dotenv/config";
-import { z } from "zod";
+import { cleanEnv , str, url } from 'envalid'
 
-const envSchema = z.object({
-  NODE_ENV: z
-    .enum(["development", "production", "test"])
-    .default("development"),
+export const env = cleanEnv(process.env , {
+  NODE_ENV : str({
+    choices : ['development','test','production'],
+    default : 'development'
+  }),
+  NEXT_PUBLIC_APP_URL : url(),
+  MONGODB_URI : str(),
+  REDIS_URL : str(),
+  JWT_ACCESS_SECRET: str(),
+  JWT_REFRESH_SECRET: str(),
+  JWT_ACCESS_EXPIRES_IN: str(),
+  JWT_REFRESH_EXPIRES_IN: str(),
+  S3_ENDPOINT: str(),
+  S3_REGION: str(),
+  S3_ACCESS_KEY: str(),
+  S3_SECRET_KEY: str(),
+  S3_BUCKET: str(),
+  AI_API_KEY: str(),
+  AI_MODEL: str(),
+  EMAIL_FROM:str(),
+  EMAIL_API_KEY: str()
 
-  NEXT_PUBLIC_API_URL: z.string().url(),
-  MONGODB_URI: z.string().min(1),
-  REDIS_URL: z.string().min(1),
-  JWT_ACCESS_SECRET: z.string().min(32),
-  JWT_REFRESH_SECRET: z.string().min(32),
-  JWT_ACCESS_EXPIRES_IN: z.string().default("15m"),
-  JWT_REFRESH_EXPIRES_IN: z.string().default("7d"),
-  S3_ENDPOINT: z.string().url(),
-  S3_REGION: z.string().min(1),
-  S3_ACCESS_KEY: z.string().min(1),
-  S3_SECRET_KEY: z.string().min(1),
-  S3_BUCKET: z.string().min(1),
-  AI_API_KEY: z.string().optional(),
-  AI_MODEL: z.string().optional(),
-  EMAIL_FROM: z.string().optional(),
-  EMAIL_API_KEY: z.string().optional(),
-});
-
-const parsedEnv = envSchema.safeParse(process.env);
-
-if (!parsedEnv.success) {
-  console.error("INVALID ENVIRONMENT VARIABLES");
-  console.error(parsedEnv.error.flatten().fieldErrors);
-
-  throw new Error("INVALID ENVIRONMENT CONFIGURATION");
-}
-
-export const env = parsedEnv.data;
+})
