@@ -6,9 +6,7 @@ import { ERROR_CODES } from './error-codes';
 
 import { logger } from '@/server/logger/logger';
 
-export function handleApiError(
-  error: unknown,
-): NextResponse {
+export function handleApiError(error: unknown): NextResponse {
   if (error instanceof AppError) {
     return NextResponse.json(
       {
@@ -44,14 +42,8 @@ export function handleApiError(
   }
 
   logger.error('Unhandled API error', {
-    error:
-      error instanceof Error
-        ? error.message
-        : error,
-    stack:
-      error instanceof Error
-        ? error.stack
-        : undefined,
+    error: error instanceof Error ? error.message : error,
+    stack: error instanceof Error ? error.stack : undefined,
   });
 
   return NextResponse.json(

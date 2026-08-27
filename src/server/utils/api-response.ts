@@ -14,10 +14,7 @@ interface ErrorResponse {
   };
 }
 
-export function successResponse<T>(
-  data: T,
-  statusCode = 200,
-) {
+export function successResponse<T>(data: T, statusCode = 200) {
   const response: SuccessResponse<T> = {
     success: true,
     data,

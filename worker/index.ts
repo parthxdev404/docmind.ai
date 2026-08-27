@@ -1,1 +1,1 @@
-console.log("DocMind worker started");
+console.log('DocMind worker started');

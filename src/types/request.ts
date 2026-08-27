@@ -1,4 +1,4 @@
-export interface RequestContext  {
-    requestId : string,
-    startedAt : number, 
+export interface RequestContext {
+  requestId: string;
+  startedAt: number;
 }

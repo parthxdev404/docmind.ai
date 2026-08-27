@@ -2,7 +2,7 @@ type LogContext = Record<string, unknown>;
 
 function formatContext(context?: LogContext) {
   if (!context || Object.keys(context).length === 0) {
-    return "";
+    return '';
   }
 
   return `${JSON.stringify(context)}`;

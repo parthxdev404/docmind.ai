@@ -1,6 +1,24 @@
-// Example for src/app/api/v1/auth/login/route.ts
-import { NextResponse } from "next/server";
+import { loginSchema } from '@/server/modules/auth/auth.schema';
+import { NextRequest } from 'next/server';
+import { authenticateUser } from '@/server/modules/auth/auth.service';
+import { withApiHandler } from '@/server/utils/api-handler';
+import { successResponse } from '@/server/utils/api-response';
+import { setAuthCookies } from '@/server/security/cookies';
+import { validate } from '@/server/utils/validation';
 
-export async function GET() {
-  return NextResponse.json({ message: "Not implemented yet" });
-}
+export const POST = withApiHandler(async (request: NextRequest) => {
+  const body = validate(loginSchema, await request.json());
+  const result = await authenticateUser({
+    ...body,
+    userAgent: request.headers.get('user-agent'),
+    ipAddress:
+      request.headers.get('x-forwarded-for') ??
+      request.headers.get('x-real-ip'),
+  });
+
+  await setAuthCookies(result.accessToken, result.refreshToken);
+
+  return successResponse({
+    user: result.user,
+  });
+});

@@ -24,5 +24,4 @@ export const ERROR_CODES = {
   TOKEN_EXPIRED: 'TOKEN_EXPIRED',
 } as const;
 
-export type ErrorCode =
-  (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
+export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];

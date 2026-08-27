@@ -1,54 +1,53 @@
-import mongoose, { type InferSchemaType, Schema , type Model } from "mongoose";
+import mongoose, { type InferSchemaType, Schema, type Model } from 'mongoose';
 
 const sessionSchema = new Schema(
-    {
-        userId : {
-            type : Schema.Types.ObjectId,
-            ref : 'User',
-            required : true,
-            index : true
-        },
-
-        refreshTokenHash : {
-            type : String,
-            required : true,
-            select : false
-        },
-
-        userAgent : {
-            type : String,
-            default : null
-        },
-        ipAddress : {
-            type : String,
-            default : null
-        },
-        expiresAt  :{
-            type : Date,
-            required : true,
-            index : true
-        },
-        revokedAt : {
-            type : Date,
-            default : null
-        },
-      
+  {
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
     },
-    {
-        timestamps : true
-    }
 
-)
+    refreshTokenHash: {
+      type: String,
+      default: null,
+      select: false,
+    },
+
+    userAgent: {
+      type: String,
+      default: null,
+    },
+    ipAddress: {
+      type: String,
+      default: null,
+    },
+    expiresAt: {
+      type: Date,
+      required: true,
+      index: true,
+    },
+    revokedAt: {
+      type: Date,
+      default: null,
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
 
 sessionSchema.index({
-    expiredAt : 1
-})
+  expiredAt: 1,
+});
 
 sessionSchema.index({
-    userId : 1,
-    revokedAt : 1
-})
+  userId: 1,
+  revokedAt: 1,
+});
 
-export type Session = InferSchemaType<typeof mongoose>
-export const SessionModel =  (mongoose.models.Session as Model<Session>) ??
-mongoose.model<Session>('Session',sessionSchema)
+export type Session = InferSchemaType<typeof sessionSchema>;
+export const SessionModel =
+  (mongoose.models.Session as Model<Session>) ??
+  mongoose.model<Session>('Session', sessionSchema);

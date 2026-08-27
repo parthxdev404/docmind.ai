@@ -1,14 +1,14 @@
-import "dotenv/config";
-import { cleanEnv , str, url } from 'envalid'
+import 'dotenv/config';
+import { cleanEnv, str, url } from 'envalid';
 
-export const env = cleanEnv(process.env , {
-  NODE_ENV : str({
-    choices : ['development','test','production'],
-    default : 'development'
+export const env = cleanEnv(process.env, {
+  NODE_ENV: str({
+    choices: ['development', 'test', 'production'],
+    default: 'development',
   }),
-  NEXT_PUBLIC_APP_URL : url(),
-  MONGODB_URI : str(),
-  REDIS_URL : str(),
+  NEXT_PUBLIC_APP_URL: url(),
+  MONGODB_URI: str(),
+  REDIS_URL: str(),
   JWT_ACCESS_SECRET: str(),
   JWT_REFRESH_SECRET: str(),
   JWT_ACCESS_EXPIRES_IN: str(),
@@ -20,7 +20,6 @@ export const env = cleanEnv(process.env , {
   S3_BUCKET: str(),
   AI_API_KEY: str(),
   AI_MODEL: str(),
-  EMAIL_FROM:str(),
-  EMAIL_API_KEY: str()
-
-})
+  EMAIL_FROM: str(),
+  EMAIL_API_KEY: str(),
+});

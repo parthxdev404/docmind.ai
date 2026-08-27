@@ -1,6 +1,20 @@
-// Example for src/app/api/v1/auth/login/route.ts
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from 'next/server';
 
-export async function GET() {
-  return NextResponse.json({ message: "Not implemented yet" });
-}
+import { registerSchema } from '@/server/modules/auth/auth.schema';
+import { registerUser } from '@/server/modules/auth/auth.service';
+import { withApiHandler } from '@/server/utils/api-handler';
+import { successResponse } from '@/server/utils/api-response';
+import { validate } from '@/server/utils/validation';
+
+export const POST = withApiHandler(async (request: NextRequest) => {
+  const body = validate(registerSchema, await request.json());
+
+  const user = await registerUser(body);
+
+  return successResponse(
+    {
+      user,
+    },
+    201,
+  );
+});
