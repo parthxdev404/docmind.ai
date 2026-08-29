@@ -22,4 +22,5 @@ export const env = cleanEnv(process.env, {
   AI_MODEL: str(),
   EMAIL_FROM: str(),
   EMAIL_API_KEY: str(),
+  EMAIL_FROM_ADDRESS: str(),
 });

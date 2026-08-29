@@ -1,6 +1,7 @@
 import { AppError } from '@/server/errors/app-error';
 import { ERROR_CODES } from '@/server/errors/error-codes';
-
+import { createOtp, verifyOtp } from './otp.service';
+import { sendOtpEmail } from '../email/brevo.service';
 import { createSession, createUser, findUserByEmail } from './auth.repository';
 import { comparePassword, hashedPasswords } from './password.service';
 import {
@@ -33,10 +34,18 @@ export async function registerUser(data: {
     passwordHash,
   });
 
+  const otp = await createOtp({
+    userId: user._id.toString(),
+    purpose: 'EMAIL_VERIFICATION',
+  });
+
+  await sendOtpEmail({ email: user.email, otp, purpose: 'EMAIL_VERIFICATION' });
+
   return {
     id: user._id.toString(),
     email: user.email,
     name: user.name,
+    isEmailVerified: user.isEmailVerified,
   };
 }
 
@@ -99,4 +108,38 @@ export async function authenticateUser(data: {
     accessToken,
     refreshToken,
   };
+}
+
+export async function verifyEmail(email: string, otp: string) {
+  const user = await findUserByEmail(email);
+
+  if (!user) {
+    throw new AppError(
+      'Invalid verification request',
+      400,
+      ERROR_CODES.INVALID_TOKEN,
+    );
+  }
+
+  if (user.isEmailVerified) {
+    return;
+  }
+
+  const valid = await verifyOtp({
+    userId: user._id.toString(),
+    otp,
+    purpose: 'EMAIL_VERIFICATION',
+  });
+
+  if (!valid) {
+    throw new AppError(
+      'Invalid or expired OTP',
+      400,
+      ERROR_CODES.INVALID_TOKEN,
+    );
+  }
+
+  user.isEmailVerified = true;
+
+  await user.save();
 }

@@ -32,3 +32,8 @@ export const resetPasswordSchema = z.object({
 
   password: z.string().min(8).max(128),
 });
+
+export const verifyEmailSchema = z.object({
+  email: z.string().email(),
+  otp: z.string().regex(/^\d{6}$/),
+});
