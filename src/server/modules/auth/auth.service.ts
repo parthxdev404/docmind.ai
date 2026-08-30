@@ -9,7 +9,8 @@ import {
   createRefreshToken,
   hashToken,
 } from './token.service';
-import { SessionMode } from '@aws-sdk/client-s3';
+import { revokeAllUserSession } from '@/server/repositories/session.repository';
+import { updateUserPassword } from '@/server/repositories/user.repository';
 
 export async function registerUser(data: {
   name: string;
@@ -89,7 +90,7 @@ export async function authenticateUser(data: {
     ipAddress: data.ipAddress,
   });
 
-  const accessToken = createAccessToken(user._id.toString());
+  const accessToken = createAccessToken(user._id.toString(), user.tokenVersion);
 
   const refreshToken = createRefreshToken(
     user._id.toString(),
@@ -142,4 +143,58 @@ export async function verifyEmail(email: string, otp: string) {
   user.isEmailVerified = true;
 
   await user.save();
+}
+
+export async function requestPasswordRequest(email: string): Promise<void> {
+  const user = await findUserByEmail(email);
+
+  if (!user) {
+    return;
+  }
+
+  const otp = await createOtp({
+    userId: user._id.toString(),
+    purpose: 'PASSWORD_RESET',
+  });
+
+  await sendOtpEmail({
+    email: user.email,
+    otp,
+    purpose: 'PASSWORD_RESET',
+  });
+}
+
+export async function resetPassword(
+  email: string,
+  otp: string,
+  newPassword: string,
+): Promise<void> {
+  const user = await findUserByEmail(email);
+
+  if (!user) {
+    throw new AppError(
+      'Invalid or Expired Token',
+      400,
+      ERROR_CODES.INVALID_TOKEN,
+    );
+  }
+
+  const valid = verifyOtp({
+    userId: user._id.toString(),
+    otp,
+    purpose: 'PASSWORD_RESET',
+  });
+
+  if (!valid) {
+    throw new AppError(
+      'Invalid or Expired Token',
+      400,
+      ERROR_CODES.INVALID_TOKEN,
+    );
+  }
+
+  const passwordHash = await hashedPasswords(newPassword);
+  await updateUserPassword(user._id.toString(), passwordHash);
+
+  await revokeAllUserSession(user._id.toString());
 }

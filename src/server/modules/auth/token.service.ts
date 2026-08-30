@@ -6,6 +6,7 @@ import { env } from '@/server/config/env';
 interface AccessTokenPayload {
   sub: string;
   type: 'access';
+  tokenVersion: number;
 }
 
 interface RefreshTokenPayload {
@@ -14,10 +15,14 @@ interface RefreshTokenPayload {
   type: 'refresh';
 }
 
-export function createAccessToken(userId: string): string {
+export function createAccessToken(
+  userId: string,
+  tokenVersion: number,
+): string {
   const payload: AccessTokenPayload = {
     sub: userId,
     type: 'access',
+    tokenVersion,
   };
 
   return jwt.sign(payload, env.JWT_ACCESS_SECRET, {
