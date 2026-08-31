@@ -20,8 +20,8 @@ export async function sendOtpEmail({
 
   const message =
     purpose === 'EMAIL_VERIFICATION'
-      ? `Your Email Verification Otp is ${otp} . It expires in 10 minutes`
-      : `Your Reset Password Otp is ${otp} . It expires in 10 minutes`;
+      ? `Your Email Verification OTP is ${otp}. It expires in 10 minutes.`
+      : `Your Reset Password OTP is ${otp}. It expires in 10 minutes.`;
 
   const response = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
@@ -35,7 +35,6 @@ export async function sendOtpEmail({
         name: env.EMAIL_FROM,
         email: env.EMAIL_FROM_ADDRESS,
       },
-
       to: [
         {
           email,
@@ -46,12 +45,14 @@ export async function sendOtpEmail({
     }),
   });
 
-  if (response.ok) {
-    const errorText = response.text();
+  if (!response.ok) {
+    const errorText = await response.text();
 
-    (logger.error('Brevo Email Delievery Failed'),
-      { status: response.status, errorText });
+    logger.error('Brevo Email Delivery Failed', {
+      status: response.status,
+      errorText,
+    });
+
+    throw new Error('Unable to send OTP email');
   }
-
-  throw new Error('Unable to send Otp Email');
 }

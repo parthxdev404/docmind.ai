@@ -42,3 +42,10 @@ export const verifyEmailSchema = z.object({
   email: z.string().email(),
   otp: z.string().regex(/^\d{6}$/),
 });
+
+export const resendOtpSchema = z.object({
+  email: z
+    .string()
+    .email()
+    .transform((value) => value.trim().toLowerCase()),
+});

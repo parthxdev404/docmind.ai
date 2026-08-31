@@ -1,6 +1,6 @@
 import { AppError } from '@/server/errors/app-error';
 import { ERROR_CODES } from '@/server/errors/error-codes';
-import { createOtp, verifyOtp } from './otp.service';
+import { createOtp, generateOtp, hashOtp, verifyOtp } from './otp.service';
 import { sendOtpEmail } from '../email/brevo.service';
 import { createSession, createUser, findUserByEmail } from './auth.repository';
 import { comparePassword, hashedPasswords } from './password.service';
@@ -11,6 +11,7 @@ import {
 } from './token.service';
 import { revokeAllUserSession } from '@/server/repositories/session.repository';
 import { updateUserPassword } from '@/server/repositories/user.repository';
+import { invalidateActiveOtp } from '@/server/repositories/otp.repository';
 
 export async function registerUser(data: {
   name: string;
@@ -197,4 +198,50 @@ export async function resetPassword(
   await updateUserPassword(user._id.toString(), passwordHash);
 
   await revokeAllUserSession(user._id.toString());
+}
+
+export async function resendVerificationOtp(email: string): Promise<void> {
+  const user = await findUserByEmail(email);
+
+  if (!user) {
+    return;
+  }
+
+  if (user.isEmailVerified) {
+    return;
+  }
+
+  await invalidateActiveOtp(user._id.toString(), 'EMAIL_VERIFICATION');
+
+  const otp = await createOtp({
+    userId: user._id.toString(),
+    purpose: 'EMAIL_VERIFICATION',
+  });
+
+  await sendOtpEmail({
+    email: user.email,
+    otp,
+    purpose: 'EMAIL_VERIFICATION',
+  });
+}
+
+export async function resendResetOtp(email: string): Promise<void> {
+  const user = await findUserByEmail(email);
+
+  if (!user) {
+    return;
+  }
+
+  await invalidateActiveOtp(user._id.toString(), 'PASSWORD_RESET');
+
+  const otp = await createOtp({
+    userId: user._id.toString(),
+    purpose: 'PASSWORD_RESET',
+  });
+
+  await sendOtpEmail({
+    email: user.email,
+    otp,
+    purpose: 'PASSWORD_RESET',
+  });
 }

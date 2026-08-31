@@ -1,0 +1,40 @@
+import redis from '../cache/redis';
+import { AppError } from '../errors/app-error';
+import { ERROR_CODES } from '../errors/error-codes';
+
+interface EmailRateLimitOption {
+  action: string;
+  email: string;
+  limit: number;
+  windowSeconds: number;
+}
+
+export async function rateLimitEmail({
+  action,
+  email,
+  limit,
+  windowSeconds,
+}: EmailRateLimitOption) {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const key = `rate-limit:email${action}:${normalizedEmail}`;
+
+  const count = await redis.incr(key);
+
+  if (count === 1) {
+    await redis.expire(key, windowSeconds);
+  }
+
+  if (count > limit) {
+    const ttl = await redis.ttl(key);
+
+    throw new AppError('Too many requests', 429, ERROR_CODES.RATE_LIMITED, {
+      retryAfter: ttl,
+    });
+  }
+
+  return {
+    limit,
+    remaining: Math.max(limit - count, 0),
+  };
+}
