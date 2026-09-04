@@ -45,8 +45,6 @@ export async function revokeSessionByRefreshToken(refreshTokenHash: string) {
     {
       revokedAt: new Date(),
     },
-    {
-      new: true,
-    },
+    { new: true },
   );
 }

@@ -19,16 +19,24 @@ const sessionSchema = new Schema(
       type: String,
       default: null,
     },
+
     ipAddress: {
       type: String,
       default: null,
     },
+
     expiresAt: {
       type: Date,
       required: true,
       index: true,
     },
+
     revokedAt: {
+      type: Date,
+      default: null,
+    },
+
+    lastUsedAt: {
       type: Date,
       default: null,
     },
@@ -39,15 +47,14 @@ const sessionSchema = new Schema(
 );
 
 sessionSchema.index({
-  expiredAt: 1,
-});
-
-sessionSchema.index({
   userId: 1,
   revokedAt: 1,
 });
 
+sessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
 export type Session = InferSchemaType<typeof sessionSchema>;
+
 export const SessionModel =
   (mongoose.models.Session as Model<Session>) ??
   mongoose.model<Session>('Session', sessionSchema);

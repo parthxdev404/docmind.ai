@@ -5,7 +5,6 @@ import {
   revokeAllUserSession,
   revokeSession,
 } from '../../repositories/session.repository';
-
 import { findUserById } from './auth.repository';
 import {
   createAccessToken,
@@ -54,6 +53,7 @@ export async function refreshSession(refreshToken: string) {
 
   const incomingHash = hashToken(refreshToken);
 
+  // Refresh-token reuse / mismatch detection
   if (incomingHash !== session.refreshTokenHash) {
     await revokeSession(session._id.toString());
 
@@ -72,11 +72,8 @@ export async function refreshSession(refreshToken: string) {
     );
   }
 
-  /*
-   * Refresh token rotation
-   */
-
-  const newAccessToken = createAccessToken(user._id.toString());
+  // Rotate refresh token
+  const newAccessToken = createAccessToken(user._id.toString(), tokenVersion);
 
   const newRefreshToken = createRefreshToken(
     user._id.toString(),
@@ -84,8 +81,8 @@ export async function refreshSession(refreshToken: string) {
   );
 
   session.refreshTokenHash = hashToken(newRefreshToken);
-
   session.expiresAt = getTokenExpiryDate('7d');
+  session.lastUsedAt = new Date();
 
   await session.save();
 
