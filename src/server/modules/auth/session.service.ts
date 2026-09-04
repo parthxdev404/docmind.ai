@@ -73,7 +73,7 @@ export async function refreshSession(refreshToken: string) {
   }
 
   // Rotate refresh token
-  const newAccessToken = createAccessToken(user._id.toString(), tokenVersion);
+  const newAccessToken = createAccessToken(user._id.toString(), 1);
 
   const newRefreshToken = createRefreshToken(
     user._id.toString(),
